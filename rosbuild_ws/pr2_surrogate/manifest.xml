@@ -1,0 +1,33 @@
+<package>
+  <description brief="Fully immersive control of a PR2 robot using the Oculus Rift and Razer Hydra">
+    The pr2_surrogate package allows you to use a PR2
+    as a surrogate for your physical body using the Oculus RIFT
+    virtual reality headset and the Razer Hydra controller.</description>
+
+  <author>David Gossow/dgossow@willowgarage.com</author>
+
+  <license>BSD</license>
+
+  <depend package="geometry_msgs"/>
+  <depend package="sensor_msgs"/>
+  <depend package="pr2_controllers_msgs"/>
+  <depend package="actionlib"/>
+  <depend package="roscpp"/>
+  <depend package="razer_hydra"/>
+  <depend package="compressed_image_transport"/>
+  <depend package="compressed_depth_image_transport"/>
+  <depend package="pr2_teleop"/>
+  <depend package="audio_capture"/>
+  <depend package="audio_play"/>
+  <depend package="pr2_controller_manager"/>
+  <depend package="robot_mechanism_controllers"/>
+  <depend package="openni_camera"/>
+  <depend package="rviz"/>
+  <depend package="tf"/>
+  
+<!--
+  For some reason, this can't be resolved, but the dependency is in stack.xml so we're fine.   
+  <depend package="oculus_rviz_plugins"/>
+ -->
+
+</package>

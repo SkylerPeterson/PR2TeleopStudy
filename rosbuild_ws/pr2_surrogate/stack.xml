@@ -1,0 +1,30 @@
+<stack>
+  <description brief="Fully immersive control of a PR2 robot using the Oculus Rift and Razer Hydra">
+    The pr2_surrogate package allows you to use a PR2
+    as a surrogate for your physical body using the Oculus RIFT
+    virtual reality headset and the Razer Hydra controller.</description>
+  <author>David Gossow/dgossow@willowgarage.com</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/pr2_surrogate</url>
+  
+  <depend stack="common_msgs" />
+  <depend stack="common_rosdeps" />
+  <depend stack="pluginlib" />
+  <depend stack="ros" />
+  <depend stack="ros_comm" />
+  <depend stack="actionlib" />
+  <depend stack="razer_hydra" />
+  <depend stack="image_transport_plugins" />
+  <depend stack="audio_common" />
+  <depend stack="openni_camera" />
+  <depend stack="geometry" />
+
+  <depend stack="oculus_rviz_plugins" />
+  <depend stack="visualization" />
+
+  <depend stack="pr2_apps" />
+  <depend stack="pr2_controllers" />
+  <depend stack="pr2_mechanism" />
+
+</stack>

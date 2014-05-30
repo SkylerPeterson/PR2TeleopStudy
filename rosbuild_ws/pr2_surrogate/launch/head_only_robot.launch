@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find pr2_surrogate)/launch/openni_head.launch"/>
+
+  <include file="$(find pr2_surrogate)/launch/head_pointer.launch"/>
+
+</launch>

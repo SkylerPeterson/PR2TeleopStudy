@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/skyler/rosbuild_ws/pr2_surrogate/build/devel/setup.sh
