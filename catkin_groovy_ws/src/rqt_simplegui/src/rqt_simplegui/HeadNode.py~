@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+import roslib
+roslib.load_manifest('rospy')
+roslib.load_manifest('sound_play')
+
+from subprocess import call
+import rospy
+from sound_play.msg import SoundRequest
+from sound_play.libsoundplay import SoundClient
+
+
+class HeadNode():
+    
+    def __init__(self):
+        
+
+
+    def speak(self, sentence):
+        
+        

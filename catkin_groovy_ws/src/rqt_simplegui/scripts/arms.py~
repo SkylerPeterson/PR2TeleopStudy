@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+import roslib
+roslib.load_manifest('rospy')
+roslib.load_manifest('trajectory_msgs')
+roslib.load_manifest('actionlib')
+roslib.load_manifest('actionlib_msgs')
+roslib.load_manifest('control_msgs')
+
+import rospy
+from actionlib import SimpleActionClient
+from trajectory_msgs.msg import JointTrajectory
+from trajectory_msgs.msg import JointTrajectoryPoint
+from control_msgs.msg import JointTrajectoryGoal
+from control_msgs.msg import JointTrajectoryAction
+
+if __name__ == "__main__":
+    rospy.init_node('arm_test_node', anonymous=True)
+
+    self.r_joint_names = ['r_shoulder_pan_joint',
+                              'r_shoulder_lift_joint',
+                              'r_upper_arm_roll_joint',
+                              'r_elbow_flex_joint',
+                              'r_forearm_roll_joint',
+                              'r_wrist_flex_joint',
+                              'r_wrist_roll_joint']
+    self.l_joint_names = ['l_shoulder_pan_joint',
+                              'l_shoulder_lift_joint',
+                              'l_upper_arm_roll_joint',
+                              'l_elbow_flex_joint',
+                              'l_forearm_roll_joint',
+                              'l_wrist_flex_joint',
+                              'l_wrist_roll_joint']
+
+
+    # Create a trajectory action client
+    r_traj_controller_name = '/r_arm_controller/joint_trajectory_action'
+    self.r_traj_action_client = SimpleActionClient(r_traj_controller_name, JointTrajectoryAction)
+    rospy.loginfo('Waiting for a response from the trajectory action server for RIGHT arm...')
+    self.r_traj_action_client.wait_for_server()
+    l_traj_controller_name = '/l_arm_controller/joint_trajectory_action'
+    self.l_traj_action_client = SimpleActionClient(l_traj_controller_name, JointTrajectoryAction)
+    rospy.loginfo('Waiting for a response from the trajectory action server for LEFT arm...')
+    self.l_traj_action_client.wait_for_server()
+
+    '''Moves the arm to the desired joints'''
+    velocities = [0] * len(positions)
+    traj_goal = JointTrajectoryGoal()
+    traj_goal.trajectory.header.stamp = (rospy.Time.now() + rospy.Duration(0.1))
+    traj_goal.trajectory.points.append(JointTrajectoryPoint(positions=positions,
+                                       velocities=velocities, time_from_start=rospy.Duration(time_to_joint)))
+	
+    if (side_prefix == 'r'):
+        traj_goal.trajectory.joint_names = self.r_joint_names
+        self.r_traj_action_client.send_goal(traj_goal)
+    else:
+         traj_goal.trajectory.joint_names = self.l_joint_names
+         self.l_traj_action_client.send_goal(traj_goal)
