@@ -1,0 +1,55 @@
+###########################
+###### start robot ########
+###########################
+ssh c1
+robot claim
+robot start
+
+##################################
+####### Navigation Task ##########
+##################################
+
+# Run Oculus or 3rd person start-up
+
+### On Robot
+roslaunch oculus_teleop robot_drive_oculus.launch
+
+### On Desktop
+roslaunch oculus_teleop desktop_Oculus.launch
+
+
+# Run Rviz or 3rd person start-up
+
+### On Robot
+roslaunch oculus_teleop robot_drive_rviz.launch
+
+### On Desktop
+roslaunch oculus_teleop desktop_Rviz.launch
+
+
+##################################
+###### Manipulation Task #########
+##################################
+
+# Run Oculus or 3rd person start-up
+
+### On Robot
+roslaunch oculus_teleop robot_manipulate_oculus.launch
+
+### On Desktop
+roslaunch oculus_teleop robot_manipulate_rviz.launch
+
+# Run Rviz or 3rd person start-up
+
+### On Robot
+roslaunch oculus_teleop desktop_Oculus.launch
+
+### On Desktop
+roslaunch oculus_teleop desktop_Rviz.launch
+
+
+###########################
+###### stop robot #########
+###########################
+robot stop
+robot release

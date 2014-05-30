@@ -1,0 +1,212 @@
+#!/usr/bin/env python
+
+import roslib
+roslib.load_manifest('rospy')
+roslib.load_manifest('actionlib')
+roslib.load_manifest('actionlib_msgs')
+roslib.load_manifest('visualization_msgs')
+roslib.load_manifest('geometry_msgs')
+roslib.load_manifest('sensor_msgs')
+
+
+# BAsic imports
+from subprocess import call
+import rospy
+import numpy as np
+# Our Node extensions imports
+from SwitchServerNode import SwitchNode
+from ArmNode import ArmNode
+from GripperNode import GripperNode
+from SpeakNode import SpeakNode
+from LoggerNode import Logger
+# Qt imports
+from qt_gui.plugin import Plugin
+from python_qt_binding import QtGui,QtCore
+from python_qt_binding.QtGui import QShortcut, QWidget, QFrame, QGroupBox, QInputDialog, QMessageBox
+from python_qt_binding.QtCore import QSignalMapper, qWarning, Signal
+# Other ROS imports
+from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Quaternion, Pose, Point, Vector3
+from std_msgs.msg import Header, ColorRGBA
+from sound_play.msg import SoundRequest
+from sensor_msgs.msg import JointState
+
+
+class OculusTeleopGUI(Plugin):
+
+    joint_sig = Signal(JointState)
+    sound_sig = Signal(SoundRequest)
+    # Constants to help us move the robot
+    HEAD_THETA = 0.0
+    HEAD_Z = 1.0
+    LEFT_GRIPPER_POSITION = 0.0
+    RIGHT_GRIPPER_POSITION = 0.0
+    GRIPPER_INTENSITY = 0.0
+    MOTION_INTENSITY = 0.0
+    ARM_INTENSITY = 0.0
+
+    r_arm_pose_box = QtGui.QComboBox()
+    l_arm_pose_box = QtGui.QComboBox()
+
+    def __init__(self, context):
+        super(OculusTeleopGUI, self).__init__(context)
+        self.setObjectName('OculusTeleopGUI')
+        self._widget = QWidget()
+
+        self.saved_r_arm_pose = dict()
+        self.saved_l_arm_pose = dict()
+
+        self.switchnode = SwitchNode()
+        self.armnode = ArmNode()
+        self.grippernode = GripperNode()
+        self.speaknode = SpeakNode()
+
+        # Logging variables
+        self.fileName = ""
+        self.fileNum = 1
+	self.isLogging = False
+	self.logRate = 10 # Hz
+        
+        # Add Clients
+        self.marker_publisher = rospy.Publisher('visualization_marker', Marker)
+
+        QtGui.QToolTip.setFont(QtGui.QFont('SansSerif', 10))
+        self.sound_sig.connect(self.sound_sig_cb)
+        
+        # Main layout element for GUI
+        large_box = QtGui.QVBoxLayout()
+        palette = QtGui.QPalette()
+        palette.setColor(QtGui.QPalette.Foreground,QtCore.Qt.blue)
+        
+        # Create Button box for GUI
+	button_box = QtGui.QGridLayout()
+        # Add The Buttons to button box here
+        button_box.addWidget(self.create_button('Stack Init'), 1, 1)
+        button_box.addWidget(self.create_button('Drive Init'), 1, 3)
+        button_box.addWidget(self.create_button('Set Rate'), 3, 1)
+        button_box.addWidget(self.create_button('Get Rate'), 3, 3)
+        button_box.addWidget(self.create_button('Start Log'), 5, 1)
+        button_box.addWidget(self.create_button('Stop Log'), 5, 3)
+
+        # Text box for logging rate
+        self.rate_label = QtGui.QLabel('Enter Logging Rate (Hz): ')
+        self.rate_label.setPalette(palette)
+        button_box.addWidget(self.rate_label, 2, 1)
+        self.rate_text_in = QtGui.QLineEdit('10')
+        button_box.addWidget(self.rate_text_in, 2, 3)
+
+        # Text box for file names
+        self.file_label = QtGui.QLabel('Enter Log File Name: ')
+        self.file_label.setPalette(palette)
+        button_box.addWidget(self.file_label, 4, 1)
+        self.file_text_in = QtGui.QLineEdit('Default')
+        button_box.addWidget(self.file_text_in, 4, 3)
+
+        # Add Button Box to main GUI layout element
+        large_box.addLayout(button_box)
+        large_box.addItem(QtGui.QSpacerItem(100,20)) 
+
+        # Speech box for speech display created
+        speech_box = QtGui.QVBoxLayout()
+        self.speech_label = QtGui.QLabel('Robot is ready to run, press button to start')
+        self.speech_label.setPalette(palette)
+        speech_box.addWidget(self.speech_label)
+        # Speech box added to main layout
+        large_box.addLayout(speech_box)
+
+        # Puts layout in widget and adds widget name for RosGUI to identify
+        self._widget.setObjectName('OculusTeleopGUI')
+        self._widget.setLayout(large_box)
+        context.add_widget(self._widget)
+        rospy.loginfo('GUI initialization complete.')
+    
+    # Will create a button, with all buttons using same event trigger
+    def create_button(self, name):
+        btn = QtGui.QPushButton(name, self._widget)
+	if (name == 'Stack Init'):
+	    btn.clicked.connect(self.command_cb)
+        elif (name == 'Drive Init'):
+	    btn.clicked.connect(self.command_cb)
+        elif (name == 'Set Rate'):
+	    btn.clicked.connect(self.command_cb)
+        elif (name == 'Get Rate'):
+	    btn.clicked.connect(self.command_cb)
+        elif (name == 'Start Log'):
+	    btn.clicked.connect(self.command_cb)
+        elif (name == 'Stop Log'):
+	    btn.clicked.connect(self.command_cb)
+	return btn
+
+    # Triggered when request to sound_play is made
+    def sound_sig_cb(self, sound_request):
+        qWarning('Received sound signal.')
+        #if (sound_request.command == SoundRequest.SAY):
+        qWarning('Robot said: ' + sound_request.arg)
+        # self.speech_label.setText('Robot said: ' + sound_request.arg)
+
+    # Triggered When Subscribber to robot sound detects a message
+    def sound_cb(self, sound_request):
+        qWarning('Received sound.')
+        self.sound_sig.emit(sound_request)
+        return
+	
+    # Triggered when button is pressed: Place response actions here
+    def command_cb(self):
+        button_name = self._widget.sender().text()
+	speechLabel = '';
+        if (button_name == 'Stack Init'):
+            self.armnode.stack_init_motion()
+            speechLabel = 'is initializing arms for stacking';
+        elif (button_name == 'Drive Init'):
+	    self.armnode.fold_motion()
+            speechLabel = 'is initializing arms for driving';
+        elif (button_name == 'Set Rate'):
+	    self.setRate()
+            speechLabel = 'set logging rate to ' + str(self.logRate) + 'Hz.'
+        elif (button_name == 'Get Rate'):
+	    qWarning('Logging Rate set to ' + str(self.logRate) + 'Hz')
+            speechLabel = 'is ready to log at ' + str(self.logRate) + 'Hz.'
+        elif (button_name == 'Start Log'):
+	    self.start_logger()
+            speechLabel = 'has started logging.'
+        elif (button_name == 'Stop Log'):
+            self.logger.closeAllBags()
+            self.isLogging = False
+            speechLabel = 'has stopped logging.'
+        
+        self.speech_label.setText('Robot ' + speechLabel)
+
+    def start_logger(self):
+        if (not self.isLogging):
+          name = self.file_text_in.text()
+          if (self.fileName == name):
+            self.fileNum += 1
+          else:
+            self.fileNum = 1
+            self.fileName = name
+          self.logger = Logger(self.fileName, str(self.fileNum), 1.0/self.logRate)
+          rospy.on_shutdown(self.logger.closeAllBags)
+          self.isLogging = True
+
+    def setRate(self):
+        if (not self.isLogging):
+          rate = self.rate_text_in.text()
+          self.logRate = float(rate)
+
+    def shutdown_plugin(self):
+        # TODO unregister all publishers here
+        # Leave both arm controllers on
+        start_controllers = ['r_arm_controller', 'l_arm_controller']
+        stop_controllers = []
+        self.armnode.set_arm_mode(start_controllers, stop_controllers, self.switchnode)
+
+    def save_settings(self, plugin_settings, instance_settings):
+        # TODO save intrinsic configuration, usually using:
+        # instance_settings.set_value(k, v)
+        pass
+
+    def restore_settings(self, plugin_settings, instance_settings):
+        # TODO restore intrinsic configuration, usually using:
+        # v = instance_settings.value(k)
+        pass
+

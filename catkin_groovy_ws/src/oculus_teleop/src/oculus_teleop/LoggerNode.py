@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+import roslib
+
+import rospy
+import sys, os
+import rosbag
+from std_msgs.msg import String
+from sensor_msgs.msg import JointState
+from sensor_msgs.msg import Joy
+from sensor_msgs.msg import Image
+import time
+#from constants import *
+
+class Logger:
+    "Class for logging information from the user studies"
+    def __init__(self, filePrefix, filePostfix, streamPeriod):
+
+        self.prefix = filePrefix
+        self.postfix = filePostfix
+
+        self.lastJointSaveTime = time.time()
+        self.lastJoySaveTime = time.time()
+        self.lastLeftHeadCamSaveTime = time.time()
+        self.streamSavingPeriod = streamPeriod
+        
+        #self.allJoints = joints[0] + joints[1]
+        
+        rospy.loginfo('Logger: Waiting for the logging directory to be set.')
+        
+        self.logDirectory = "/home/skyler/OculusData/"
+        
+        rospy.loginfo('Logger: got logging directory:'+self.logDirectory)
+        self.initializeBags()
+
+        ## ROBOT JOINTS
+        self.jointSub = rospy.Subscriber('joint_states', JointState, self.receieveJointStates)
+        self.joySub = rospy.Subscriber('joy', Joy, self.receieveJoyStates)
+        self.leftHeadCamSub = rospy.Subscriber('wide_stereo/left/image_color', Image, self.receieveLeftHeadCamStates)
+        
+    def initializeBags(self):
+        self.jointStateBag = rosbag.Bag(self.logDirectory + self.prefix + '_Joint_State_' + self.postfix + '.bag', 'w')
+        self.joyStateBag = rosbag.Bag(self.logDirectory + self.prefix + '_Joy_State_' + self.postfix + '.bag', 'w')
+        self.leftHeadCamStateBag = rosbag.Bag(self.logDirectory + self.prefix + '_Left_Head_Cam_' + self.postfix + '.bag', 'w')
+
+    def closeAllBags(self):
+        self.jointSub.unregister()
+        self.jointStateBag.close()
+        self.joySub.unregister()
+        self.joyStateBag.close()
+        self.leftHeadCamSub.unregister()
+        self.leftHeadCamStateBag.close()
+
+    def update(self):
+        time.sleep(0.02)
+
+    ######################
+    ## Callback functions
+    ######################
+
+    def receieveJointStates(self, msg):
+        if (time.time() - self.lastJointSaveTime > self.streamSavingPeriod):
+            self.jointStateBag.write('joint_states', msg)
+            self.lastJointSaveTime = time.time()
+    
+    def receieveJoyStates(self, data):
+        if (time.time() - self.lastJoySaveTime > self.streamSavingPeriod):
+            self.joyStateBag.write('joy', data)
+            self.lastJoySaveTime = time.time()
+
+    def receieveLeftHeadCamStates(self, img):
+        if (time.time() - self.lastLeftHeadCamSaveTime > self.streamSavingPeriod):
+            self.leftHeadCamStateBag.write('wide_stereo/left/image_color', img)
+            self.lastLeftHeadCamSaveTime = time.time()
+

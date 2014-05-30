@@ -1,0 +1,9 @@
+<launch>
+
+  <!-- This runs the interactive manipulation -->
+  
+  <!-- START: Launch imports -->
+  <include file="$(find pr2_teleop_general)/launch/pr2_teleop_general_joystick_body_only.launch"/>
+  <!-- END: Launch imports --> 
+
+</launch>

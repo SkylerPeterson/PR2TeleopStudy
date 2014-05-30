@@ -1,0 +1,12 @@
+<library path="src">
+  <class name="Oculus Teleop Plugin" type="oculus_teleop.oculus_teleop.OculusTeleopGUI" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      An plugin to run the oculus vr teleop tests.
+    </description>
+    <qtgui>
+      <label>Oculus Teleop</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Great user interface to provide real value.</statustip>
+    </qtgui>
+  </class>
+</library>

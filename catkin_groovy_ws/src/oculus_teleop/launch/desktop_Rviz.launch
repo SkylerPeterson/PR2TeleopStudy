@@ -1,0 +1,16 @@
+<launch>
+
+  <!-- START: Open Dashboard -->
+  <node name="rqt_pr2_dashboard" pkg="rqt_pr2_dashboard" type="rqt_pr2_dashboard" output="screen"></node>
+  <!-- END: Open Dashboard -->
+  
+  <!-- START: Open rviz -->
+  <arg name="-d" default="-d $(find oculus_teleop)/launch/PointandClick.rviz" />
+  <node name="rviz" pkg="rviz" type="rviz" output="screen" args="$(arg -d)"></node>
+  <!-- END: Open rviz -->
+
+  <!-- START: Open rqt -->
+  <node name="rqt" pkg="rqt_gui" type="rqt_gui" output="screen"></node>
+  <!-- END: Open rqt -->
+
+</launch>
